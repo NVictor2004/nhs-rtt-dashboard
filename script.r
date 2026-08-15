@@ -1,5 +1,6 @@
 library(tidyverse)
 library(janitor)
+library(shiny)
 
 data <- list.files(path = "data", full.names = TRUE) |>
   read_csv() |>
@@ -152,7 +153,29 @@ starting <- starting |>
   filter(provider_org_code == provider) |>
   select(period, status, totalAll)
 
-bind_rows(data, starting) |>
-  ggplot(aes(x = period, y = totalAll, color = status)) +
-  geom_line() +
-  geom_point()
+total <- bind_rows(data, starting)
+
+ui <- fluidPage(
+  titlePanel("Dashboard"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("code", "Select Code:",
+        choices = names(data)
+      )
+    ),
+    mainPanel(
+      plotOutput("lineGraph")
+    )
+  )
+)
+
+server <- function(input, output) {
+  output$lineGraph <- renderPlot({
+    total |>
+      ggplot(aes(x = period, y = totalAll, color = status)) +
+      geom_line() +
+      geom_point()
+  })
+}
+
+shinyApp(ui = ui, server = server)
