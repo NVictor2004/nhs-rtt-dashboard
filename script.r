@@ -1,7 +1,8 @@
 library(tidyverse)
 library(janitor)
 
-data <- read_csv("./20260630-RTT-June-2026-full-extract.csv") |>
+data <- list.files(path = "data", full.names = TRUE) |>
+  read_csv() |>
   clean_names() |>
   mutate(period = ceiling_date(my(period), unit = "month") - days(1))
 
@@ -10,23 +11,22 @@ starting <- data |>
   select(
     period, provider_parent_org_code, provider_parent_name, provider_org_code,
     provider_org_name, commissioner_parent_org_code, commissioner_parent_name,
-    commissioner_org_code, commissioner_org_name, rtt_part_type,
-    rtt_part_description, treatment_function_code, treatment_function_name,
-    total_all
+    commissioner_org_code, commissioner_org_name, treatment_function_code,
+    treatment_function_name, total_all
   )
 
 data <- data |>
   filter(rtt_part_type != "Part_3")
 
-data |>
+data <- data |>
   filter(treatment_function_code == "C_999") |>
   filter(rtt_part_type != "Part_2A") |>
   mutate(status = case_when(
     rtt_part_type == "Part_1A" | rtt_part_type == "Part_1B" ~ "Completed",
     rtt_part_type == "Part_2" ~ "Incomplete",
   )) |>
-  group_by(period, provider_org_code, status) |>
   summarise(
+    .by = c(period, provider_org_code, status),
     week00to01 = sum(gt_00_to_01_weeks_sum_1),
     week01to02 = sum(gt_01_to_02_weeks_sum_1),
     week02to03 = sum(gt_02_to_03_weeks_sum_1),
@@ -137,4 +137,22 @@ data |>
     totalAll = sum(total_all)
   )
 
-print(head(data))
+starting <- starting |>
+  filter(treatment_function_code == "C_999") |>
+  summarise(.by = c(period, provider_org_code), totalAll = sum(total_all)) |>
+  mutate(status = "Started")
+
+provider <- "H3W7Q"
+
+data <- data |>
+  filter(provider_org_code == provider) |>
+  select(period, status, totalAll)
+
+starting <- starting |>
+  filter(provider_org_code == provider) |>
+  select(period, status, totalAll)
+
+bind_rows(data, starting) |>
+  ggplot(aes(x = period, y = totalAll, color = status)) +
+  geom_line() +
+  geom_point()
