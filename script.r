@@ -23,7 +23,7 @@ data <- data |>
   filter(treatment_function_code == "C_999") |>
   filter(rtt_part_type != "Part_2A") |>
   mutate(status = case_when(
-    rtt_part_type == "Part_1A" | rtt_part_type == "Part_1B" ~ "Completed",
+    rtt_part_type %in% c("Part_1A", "Part_1B") ~ "Completed",
     rtt_part_type == "Part_2" ~ "Incomplete",
   )) |>
   summarise(
@@ -143,8 +143,6 @@ starting <- starting |>
   summarise(.by = c(period, provider_org_code), totalAll = sum(total_all)) |>
   mutate(status = "Started")
 
-provider <- "H3W7Q"
-
 data <- data |>
   select(period, provider_org_code, status, totalAll)
 
@@ -158,7 +156,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("code", "Select Code:",
-        choices = unique(total$provider_org_code)
+        choices = list("Total", Providers = unique(total$provider_org_code))
       )
     ),
     mainPanel(
@@ -169,11 +167,19 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   output$lineGraph <- renderPlot({
-    total |>
-      filter(provider_org_code == input$code) |>
-      ggplot(aes(x = period, y = totalAll, color = status)) +
-      geom_line() +
-      geom_point()
+    if (input$code == "Total") {
+      total |>
+        summarise(.by = c(period, status), totalAll = sum(totalAll)) |>
+        ggplot(aes(x = period, y = totalAll, color = status)) +
+        geom_line() +
+        geom_point()
+    } else {
+      total |>
+        filter(provider_org_code == input$code) |>
+        ggplot(aes(x = period, y = totalAll, color = status)) +
+        geom_line() +
+        geom_point()
+    }
   })
 }
 
