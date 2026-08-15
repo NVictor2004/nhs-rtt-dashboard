@@ -146,12 +146,10 @@ starting <- starting |>
 provider <- "H3W7Q"
 
 data <- data |>
-  filter(provider_org_code == provider) |>
-  select(period, status, totalAll)
+  select(period, provider_org_code, status, totalAll)
 
 starting <- starting |>
-  filter(provider_org_code == provider) |>
-  select(period, status, totalAll)
+  select(period, provider_org_code, status, totalAll)
 
 total <- bind_rows(data, starting)
 
@@ -160,7 +158,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("code", "Select Code:",
-        choices = names(data)
+        choices = unique(total$provider_org_code)
       )
     ),
     mainPanel(
@@ -172,6 +170,7 @@ ui <- fluidPage(
 server <- function(input, output) {
   output$lineGraph <- renderPlot({
     total |>
+      filter(provider_org_code == input$code) |>
       ggplot(aes(x = period, y = totalAll, color = status)) +
       geom_line() +
       geom_point()
