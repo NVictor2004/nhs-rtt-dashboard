@@ -3,8 +3,24 @@ library(janitor)
 
 data <- read_csv("./20260630-RTT-June-2026-full-extract.csv") |>
   clean_names() |>
+  mutate(period = ceiling_date(my(period), unit = "month") - days(1))
+
+starting <- data |>
+  filter(rtt_part_type == "Part_3") |>
+  select(
+    period, provider_parent_org_code, provider_parent_name, provider_org_code,
+    provider_org_name, commissioner_parent_org_code, commissioner_parent_name,
+    commissioner_org_code, commissioner_org_name, rtt_part_type,
+    rtt_part_description, treatment_function_code, treatment_function_name,
+    total_all
+  )
+
+data <- data |>
+  filter(rtt_part_type != "Part_3")
+
+data |>
   filter(treatment_function_code == "C_999") |>
-  filter(rtt_part_type != "Part_2A" & rtt_part_type != "Part_3") |>
+  filter(rtt_part_type != "Part_2A") |>
   mutate(status = case_when(
     rtt_part_type == "Part_1A" | rtt_part_type == "Part_1B" ~ "Completed",
     rtt_part_type == "Part_2" ~ "Incomplete",
