@@ -21,13 +21,9 @@ data <- data |>
 
 data <- data |>
   filter(treatment_function_code == "C_999") |>
-  filter(rtt_part_type != "Part_2A") |>
-  mutate(status = case_when(
-    rtt_part_type %in% c("Part_1A", "Part_1B") ~ "Completed",
-    rtt_part_type == "Part_2" ~ "Incomplete",
-  )) |>
+  filter(rtt_part_type == "Part_2") |>
   summarise(
-    .by = c(period, provider_org_code, status),
+    .by = c(period),
     week00to01 = sum(gt_00_to_01_weeks_sum_1),
     week01to02 = sum(gt_01_to_02_weeks_sum_1),
     week02to03 = sum(gt_02_to_03_weeks_sum_1),
@@ -136,27 +132,20 @@ data <- data |>
     total = sum(total),
     unknownStartDate = sum(patients_with_unknown_clock_start_date),
     totalAll = sum(total_all)
+  ) |>
+  pivot_longer(
+    cols = week00to01:beyondWeek104,
+    names_to = "week",
+    values_to = "people",
+    names_transform = list(week = fct_inorder),
   )
-
-starting <- starting |>
-  filter(treatment_function_code == "C_999") |>
-  summarise(.by = c(period, provider_org_code), totalAll = sum(total_all)) |>
-  mutate(status = "Started")
-
-data <- data |>
-  select(period, provider_org_code, status, totalAll)
-
-starting <- starting |>
-  select(period, provider_org_code, status, totalAll)
-
-total <- bind_rows(data, starting)
 
 ui <- fluidPage(
   titlePanel("Dashboard"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("code", "Select Code:",
-        choices = list("Total", Providers = unique(total$provider_org_code))
+      selectInput("period", "Select Time Period:",
+        choices = unique(data$period)
       )
     ),
     mainPanel(
@@ -167,19 +156,10 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   output$lineGraph <- renderPlot({
-    if (input$code == "Total") {
-      total |>
-        summarise(.by = c(period, status), totalAll = sum(totalAll)) |>
-        ggplot(aes(x = period, y = totalAll, color = status)) +
-        geom_line() +
-        geom_point()
-    } else {
-      total |>
-        filter(provider_org_code == input$code) |>
-        ggplot(aes(x = period, y = totalAll, color = status)) +
-        geom_line() +
-        geom_point()
-    }
+    data |>
+      filter(period == input$period) |>
+      ggplot(aes(x = week, y = people)) +
+      geom_col()
   })
 }
 
