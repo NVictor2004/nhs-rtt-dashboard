@@ -138,7 +138,15 @@ data <- data |>
     names_to = "week",
     values_to = "people",
     names_transform = list(week = fct_inorder),
-  )
+  ) |>
+  mutate(
+    week_str = as.character(week),
+    start_num = as.numeric(stringr::str_extract(week_str, "\\d+(?=to)")),
+    end_num   = as.numeric(stringr::str_extract(week_str, "(?<=to)\\d+")),
+    week_numeric =
+      ifelse(week_str == "beyondWeek104", 104.5, (start_num + end_num) / 2)
+  ) |>
+  select(-week_str, -start_num, -end_num)
 
 ui <- fluidPage(
   titlePanel("Dashboard"),
@@ -149,17 +157,25 @@ ui <- fluidPage(
       )
     ),
     mainPanel(
-      plotOutput("lineGraph")
+      plotOutput("colGraph"),
+      plotOutput("boxPlot")
     )
   )
 )
 
 server <- function(input, output) {
-  output$lineGraph <- renderPlot({
+  output$colGraph <- renderPlot({
     data |>
       filter(period == input$period) |>
       ggplot(aes(x = week, y = people)) +
       geom_col()
+  })
+
+  output$boxPlot <- renderPlot({
+    data |>
+      filter(period == input$period) |>
+      ggplot(aes(x = week_numeric, weight = people)) +
+      geom_boxplot()
   })
 }
 
