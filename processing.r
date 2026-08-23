@@ -1,25 +1,6 @@
 library(tidyverse)
-library(janitor)
-library(shiny)
 
-data <- list.files(path = "data", full.names = TRUE) |>
-  read_csv() |>
-  clean_names() |>
-  mutate(period = ceiling_date(my(period), unit = "month") - days(1))
-
-starting <- data |>
-  filter(rtt_part_type == "Part_3") |>
-  select(
-    period, provider_parent_org_code, provider_parent_name, provider_org_code,
-    provider_org_name, commissioner_parent_org_code, commissioner_parent_name,
-    commissioner_org_code, commissioner_org_name, treatment_function_code,
-    treatment_function_name, total_all
-  )
-
-data <- data |>
-  filter(rtt_part_type != "Part_3")
-
-data <- data |>
+data <- readRDS("cache/cleaned_data.rds") |>
   filter(treatment_function_code == "C_999") |>
   filter(rtt_part_type == "Part_2") |>
   summarise(
@@ -148,35 +129,4 @@ data <- data |>
   ) |>
   select(-week_str, -start_num, -end_num)
 
-ui <- fluidPage(
-  titlePanel("Dashboard"),
-  sidebarLayout(
-    sidebarPanel(
-      selectInput("period", "Select Time Period:",
-        choices = unique(data$period)
-      )
-    ),
-    mainPanel(
-      plotOutput("colGraph"),
-      plotOutput("boxPlot")
-    )
-  )
-)
-
-server <- function(input, output) {
-  output$colGraph <- renderPlot({
-    data |>
-      filter(period == input$period) |>
-      ggplot(aes(x = week, y = people)) +
-      geom_col()
-  })
-
-  output$boxPlot <- renderPlot({
-    data |>
-      filter(period == input$period) |>
-      ggplot(aes(x = week_numeric, weight = people)) +
-      geom_boxplot()
-  })
-}
-
-shinyApp(ui = ui, server = server)
+saveRDS(data, "cache/processed_data.rds")
