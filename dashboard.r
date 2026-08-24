@@ -9,7 +9,9 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("period", "Select Time Period:",
-        choices = unique(data$period)
+        choices =
+          setNames(unique(data$period), format(unique(data$period), "%B %Y")),
+        selected = max(data$period)
       )
     ),
     mainPanel(
@@ -30,17 +32,18 @@ server <- function(input, output) {
       labs(
         y = "Number of People",
         x = "Number of Weeks",
-        title = "The Number of People waiting for each length of time"
+        title = "The number of people waiting for each number of weeks"
       )
   })
 
   output$boxPlot <- renderPlot({
     data |>
       filter(period == input$period) |>
-      ggplot(aes(x = week_numeric, y = "", weight = people)) +
+      ggplot(aes(x = week_numeric, y = NULL, weight = people)) +
       geom_boxplot() +
       scale_x_continuous(breaks = seq(0, 105, by = 2)) +
-      labs(x = "Number of Weeks", y = "")
+      labs(x = "Number of Weeks", y = NULL) +
+      theme(axis.text.y  = element_blank(), axis.ticks.y = element_blank())
   })
 }
 
