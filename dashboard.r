@@ -67,7 +67,7 @@ server <- function(input, output) {
 
   # Generating the box for the total number of people on the waiting list
   output$total <- renderValueBox({
-    total <- period_data()[1, "totalAll"]
+    total <- period_data()[1, "total_all"]
     valueBox(
       value = round(total),
       subtitle = "Total number of people on the waiting list"
@@ -78,7 +78,7 @@ server <- function(input, output) {
   output$under18weeks <- renderValueBox({
     under18weeks <- period_data() |>
       filter(week_numeric <= 18) |>
-      summarise(under18 = sum(people), total = first(totalAll))
+      summarise(under18 = sum(people), total = first(total_all))
 
     valueBox(
       value =
@@ -94,7 +94,7 @@ server <- function(input, output) {
   output$under52weeks <- renderValueBox({
     under52weeks <- period_data() |>
       filter(week_numeric <= 52) |>
-      summarise(under52 = sum(people), total = first(totalAll))
+      summarise(under52 = sum(people), total = first(total_all))
 
     valueBox(
       value =
