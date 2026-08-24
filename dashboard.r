@@ -1,5 +1,7 @@
 library(tidyverse)
 library(shiny)
+library(shinydashboard)
+library(matrixStats)
 
 data <- readRDS("cache/processed_data.rds")
 maximum <- max(data$people)
@@ -12,11 +14,17 @@ ui <- fluidPage(
         choices =
           setNames(unique(data$period), format(unique(data$period), "%B %Y")),
         selected = max(data$period)
-      )
+      ),
+
     ),
     mainPanel(
-      plotOutput("colGraph"),
-      plotOutput("boxPlot")
+      fluidRow(
+        valueBoxOutput("median", width = 3),
+        valueBoxOutput("total", width = 3),
+        valueBoxOutput("under18weeks", width = 3),
+        valueBoxOutput("under52weeks", width = 3)
+      ),
+      plotOutput("colGraph")
     )
   )
 )
@@ -36,14 +44,48 @@ server <- function(input, output) {
       )
   })
 
-  output$boxPlot <- renderPlot({
-    data |>
+  output$median <- renderValueBox({
+    output <- data |>
+      filter(period == input$period)
+    median <- weightedMedian(output$week_numeric, output$people)
+    valueBox(
+      value = round(median, 1),
+      subtitle = "Median waiting time (weeks)"
+    )
+  })
+
+  output$total <- renderValueBox({
+    output <- data |>
       filter(period == input$period) |>
-      ggplot(aes(x = week_numeric, y = NULL, weight = people)) +
-      geom_boxplot() +
-      scale_x_continuous(breaks = seq(0, 105, by = 2)) +
-      labs(x = "Number of Weeks", y = NULL) +
-      theme(axis.text.y  = element_blank(), axis.ticks.y = element_blank())
+      head(1)
+    valueBox(
+      value = round(output$totalAll),
+      subtitle = "Total number of people on the waiting list"
+    )
+  })
+
+  output$under18weeks <- renderValueBox({
+    output <- data |>
+      filter(period == input$period) |>
+      filter(week_numeric <= 18) |>
+      summarise(under18 = sum(people), total = first(totalAll))
+
+    valueBox(
+      value = paste0(round((output$under18 / output$total) * 100, 1), "%"),
+      subtitle = "Proportion of people waiting less than 18 weeks"
+    )
+  })
+
+  output$under52weeks <- renderValueBox({
+    output <- data |>
+      filter(period == input$period) |>
+      filter(week_numeric <= 52) |>
+      summarise(under52 = sum(people), total = first(totalAll))
+
+    valueBox(
+      value = paste0(round((output$under52 / output$total) * 100, 1), "%"),
+      subtitle = "Proportion of people waiting less than 52 weeks"
+    )
   })
 }
 
