@@ -8,6 +8,7 @@ data <- list.files(path = "data", full.names = TRUE) |>
   clean_names() |>
   # Convert the `period` column to the last day of the corresponding month
   mutate(period = ceiling_date(my(period), unit = "month") - days(1)) |>
+  # If any organisation codes or names are missing, replace them with "UNKNOWN"
   mutate(across(
     provider_parent_org_code:commissioner_org_name,
     \(x) coalesce(x, "UNKNOWN")
@@ -21,9 +22,11 @@ starting <- data |>
     treatment_function_name, total_all
   )
 
-# Remove the main RTT pathways from the original dataset
+# Continue cleaning original dataset
 data <- data |>
+  # Remove the new RTT pathways
   filter(rtt_part_type != "Part_3") |>
+  # Replace missing values
   mutate(
     across(
       c(gt_00_to_01_weeks_sum_1:gt_104_weeks_sum_1,
