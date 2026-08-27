@@ -9,8 +9,8 @@ To run this pipeline, you must have R installed with the R packages `tidyverse`,
 ## How to run the pipeline
 
 1. Clone the repository
-2. Create a folder called `data` in the project root folder
+2. Create a folder called `data` in the project root folder, and create a folder called `raw` inside the `data` folder
 3. Download the CSV files from the NHS RTT waiting times [website](https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/) that you want to use in your analysis
-4. Move the files into the `data` folder
-5. Run `Rscript run_pipeline.r` in the project root folder
+4. Move the files into the `data/raw` folder
+5. Run `Rscript run_pipeline.R` in the project root folder
 6. Open the dashboard in your web browser at the specified URL

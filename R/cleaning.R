@@ -2,7 +2,7 @@ library(tidyverse)
 library(janitor)
 
 # Concatenate all CSV files in the `data` directory together
-data <- list.files(path = "data", full.names = TRUE) |>
+data <- list.files(path = "data/raw", full.names = TRUE) |>
   read_csv() |>
   # Clean the column names
   clean_names() |>
@@ -37,5 +37,5 @@ data <- data |>
   )
 
 # Save both cleaned datasets
-saveRDS(starting, "cache/cleaned_starting.rds")
-saveRDS(data, "cache/cleaned_data.rds")
+saveRDS(starting, "data/processed/cleaned_starting.rds")
+saveRDS(data, "data/processed/cleaned_data.rds")

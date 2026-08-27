@@ -4,7 +4,7 @@ library(shinydashboard)
 library(matrixStats)
 
 # Retrieve processed data from cache
-data <- readRDS("../cache/processed_data.rds")
+data <- readRDS("../data/processed/processed_data.rds")
 
 # Create the User Interface
 ui <- fluidPage(

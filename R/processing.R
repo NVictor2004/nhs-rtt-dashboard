@@ -1,7 +1,7 @@
 library(tidyverse)
 
 # Process the cleaned data
-data <- readRDS("cache/cleaned_data.rds") |>
+data <- readRDS("data/processed/cleaned_data.rds") |>
   # Filter for the data on incomplete pathways across all types of treatment
   filter(treatment_function_code == "C_999") |>
   filter(rtt_part_type == "Part_2") |>
@@ -40,4 +40,4 @@ data <- readRDS("cache/cleaned_data.rds") |>
   select(-week_str, -start_num, -end_num)
 
 # Save the processed data to disk
-saveRDS(data, "cache/processed_data.rds")
+saveRDS(data, "data/processed/processed_data.rds")
