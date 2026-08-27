@@ -1,7 +1,7 @@
 message("Starting NHS Referral to Treatment (RTT) Waiting Times pipeline")
 
 # Create cache directory if it does not already exist
-if (!file.exists("data/processed")) {
+if (!dir.exists("data/processed")) {
   dir.create("data/processed")
 }
 
